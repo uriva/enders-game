@@ -56,6 +56,13 @@ const {
   ...keptDefinitions
 } = threeComponentDefinitions;
 
+// We also manually delete Torus and TorusKnot if they exist, to avoid conflicts with our Game* versions.
+if ('Torus' in keptDefinitions) delete (keptDefinitions as any).Torus;
+if ('TorusKnot' in keptDefinitions) delete (keptDefinitions as any).TorusKnot;
+if ('Icosahedron' in keptDefinitions) delete (keptDefinitions as any).Icosahedron;
+if ('Dodecahedron' in keptDefinitions) delete (keptDefinitions as any).Dodecahedron;
+
+
 /**
  * Custom game component definitions with Zod schemas for props.
  */
@@ -109,6 +116,35 @@ const gameComponentDefinitions = {
     }),
   },
 
+  GameTorus: {
+    description: "A physics-enabled torus (donut shape). Good for rings, portals, or strange architecture.",
+    props: z.object({
+      ...basePrimitiveProps,
+      args: z.array(z.number()).optional().describe("[radius, tubeThickness] — default [1, 0.4]"),
+    }),
+  },
+  GameTorusKnot: {
+    description: "A physics-enabled torus knot (complex twisted ring). Great for magical or abstract objects.",
+    props: z.object({
+      ...basePrimitiveProps,
+      args: z.array(z.number()).optional().describe("[radius, tubeThickness] — default [1, 0.4]"),
+    }),
+  },
+  GameIcosahedron: {
+    description: "A physics-enabled icosahedron (20-sided polygon). Good for gems, crystals, or abstract rocks.",
+    props: z.object({
+      ...basePrimitiveProps,
+      args: z.array(z.number()).optional().describe("[radius] — default [1]"),
+    }),
+  },
+  GameDodecahedron: {
+    description: "A physics-enabled dodecahedron (12-sided polygon). Good for magical objects or complex boulders.",
+    props: z.object({
+      ...basePrimitiveProps,
+      args: z.array(z.number()).optional().describe("[radius] — default [1]"),
+    }),
+  },
+
   TriggerVolume: {
     description:
       "An invisible sensor box that detects when the player walks into it. Use this to create location-based events, like the player approaching an object, hiding behind something, or exploring a specific area. Place these around interesting parts of your scene. When the player enters it, you will be notified.",
@@ -116,6 +152,14 @@ const gameComponentDefinitions = {
       name: z.string().describe("A unique, descriptive name for this zone (e.g. 'near_poison_drink', 'behind_giant')"),
       position: vec3.describe("[x, y, z] position"),
       size: vec3.describe("[width, height, depth] — default [2,2,2]")
+    }),
+  },
+
+  ProceduralAudio: {
+    description: "A background music synthesizer. Include EXACTLY ONE in every scene to set the mood.",
+    props: z.object({
+      mood: z.enum(["ominous", "ethereal", "tense", "triumphant", "silence"]).optional().describe("The mood of the background music. Default: silence"),
+      volume: z.number().optional().describe("Volume from 0.0 to 1.0. Default 0.2"),
     }),
   },
 

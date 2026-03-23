@@ -18,7 +18,12 @@ export function buildSystemPrompt(): string {
       "DO NOT include cameras, OrbitControls, or player controllers. The player is hardcoded at [0, 2, 8] with a headlamp.",
       "DO NOT include basic fallback lighting (ambient and point lights are already hardcoded, though you should add your own dramatic lighting on top).",
       "USE TriggerVolume to create reactive scenes! Place TriggerVolumes around interesting objects (like behind the Giant, near the drinks). When the player walks into a TriggerVolume, you will receive a system message and can react dynamically!",
-      "Use GameBox, GameSphere, GameCylinder, and GameCone for all solid objects. Set isStatic: true (default) for environmental objects. Set isStatic: false for objects the player should be able to push.",
+            "The player is 1.5 units tall and can only jump about 1 unit high. If you want the player to climb something or reach higher areas, you MUST provide stairs or ramps. Each step cannot exceed 0.8 units in height.",
+      "Use GameBox, GameSphere, GameCylinder, GameCone for simple objects.",
+      "Use GameTorus, GameTorusKnot, GameIcosahedron, GameDodecahedron for complex, magical, or alien objects.",
+      "Combine primitives inside a Group to build complex structures (like statues, archways, or vehicles). Set isStatic: false for objects the player should be able to push.",
+      "Include EXACTLY ONE ProceduralAudio component in every scene to set the mood (moods: ominous, ethereal, tense, triumphant, silence).",
+
       "Do NOT use Box, Sphere, Cylinder, or Cone — those are not available. Only the Game* versions exist.",
       "Design scenes as explorable 3D spaces. Place objects at reasonable positions on the ground (y >= 0). Make spaces large enough to walk through.",
       "The player spawns at approximately position [0, 2, 8] facing toward the origin. Place the main scene elements between z=-5 and z=6 so they are visible. The Giant or main NPC should be near z=0, with interactive objects (table, goblets, etc.) between the player and the NPC.",
@@ -51,7 +56,9 @@ IMPORTANT SPEC RULES:
 - Each element has "type" (component name), "props" (object), and optionally "children" (array of element IDs).
 - DO NOT include a GroundPlane. It is hardcoded in the engine.
 - NEVER include cameras, OrbitControls, or player controllers.
-- Use GameBox, GameSphere, GameCylinder, GameCone for solid objects.
+- Use GameBox, GameSphere, GameCylinder, GameCone, GameTorus, GameTorusKnot, GameIcosahedron, GameDodecahedron for solid objects.
+- If a platform is higher than 1 unit, build stairs to it using multiple GameBox elements.
+- Include one ProceduralAudio for background music.
 - Use numeric literals only for rotations, positions, and sizes. Example: 1.57 instead of Math.PI / 2.
 - The root element should be a Group containing all scene children.
 

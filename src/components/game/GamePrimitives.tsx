@@ -13,7 +13,7 @@ interface PhysicsProps {
   isStatic?: boolean;
   restitution?: number;
   friction?: number;
-  colliderType?: "cuboid" | "ball" | "capsule" | "none";
+  colliderType?: "cuboid" | "ball" | "capsule" | "hull" | "trimesh" | "none";
 }
 
 interface PhysicsWrapperProps extends PhysicsProps {
@@ -46,6 +46,22 @@ function PhysicsWrapper({
     );
   }
 
+  if (colliderType === "hull" || colliderType === "trimesh") {
+    return (
+      <RigidBody
+        type={isStatic ? "fixed" : "dynamic"}
+        position={position}
+        rotation={rotation}
+        mass={mass}
+        restitution={restitution}
+        friction={friction}
+        colliders={colliderType}
+      >
+        {children}
+      </RigidBody>
+    );
+  }
+
   const collider =
     colliderType === "ball" ? (
       <BallCollider args={colliderArgs as [number]} />
@@ -63,6 +79,7 @@ function PhysicsWrapper({
       mass={mass}
       restitution={restitution}
       friction={friction}
+      colliders={false}
     >
       {collider}
       {children}
@@ -247,6 +264,170 @@ export function GameCone({
     >
       <mesh castShadow={castShadow} receiveShadow={receiveShadow}>
         <coneGeometry args={args} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      {children}
+    </PhysicsWrapper>
+  );
+}
+
+// ---- Complex Shapes ----
+
+interface GameTorusProps extends PhysicsProps {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  args?: [number, number, number?, number?]; // radius, tube, radialSegments, tubularSegments
+  color?: string;
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+  children?: ReactNode;
+}
+
+export function GameTorus({
+  position,
+  rotation,
+  args = [1, 0.4, 16, 100],
+  color = "#888",
+  castShadow = true,
+  receiveShadow = true,
+  mass,
+  isStatic,
+  restitution,
+  friction,
+  colliderType = "trimesh",
+  children,
+}: GameTorusProps) {
+  return (
+    <PhysicsWrapper
+      position={position}
+      rotation={rotation}
+      mass={mass}
+      isStatic={isStatic}
+      restitution={restitution}
+      friction={friction}
+      colliderType={colliderType}
+    >
+      <mesh castShadow={castShadow} receiveShadow={receiveShadow}>
+        <torusGeometry args={args} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      {children}
+    </PhysicsWrapper>
+  );
+}
+
+interface GameTorusKnotProps extends PhysicsProps {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  args?: [number, number, number?, number?, number?, number?];
+  color?: string;
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+  children?: ReactNode;
+}
+
+export function GameTorusKnot({
+  position,
+  rotation,
+  args = [1, 0.4, 64, 8, 2, 3],
+  color = "#888",
+  castShadow = true,
+  receiveShadow = true,
+  mass,
+  isStatic,
+  restitution,
+  friction,
+  colliderType = "trimesh",
+  children,
+}: GameTorusKnotProps) {
+  return (
+    <PhysicsWrapper
+      position={position}
+      rotation={rotation}
+      mass={mass}
+      isStatic={isStatic}
+      restitution={restitution}
+      friction={friction}
+      colliderType={colliderType}
+    >
+      <mesh castShadow={castShadow} receiveShadow={receiveShadow}>
+        <torusKnotGeometry args={args} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      {children}
+    </PhysicsWrapper>
+  );
+}
+
+interface GamePolyhedronProps extends PhysicsProps {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  args?: [number, number?]; // radius, detail
+  color?: string;
+  castShadow?: boolean;
+  receiveShadow?: boolean;
+  children?: ReactNode;
+}
+
+export function GameIcosahedron({
+  position,
+  rotation,
+  args = [1, 0],
+  color = "#888",
+  castShadow = true,
+  receiveShadow = true,
+  mass,
+  isStatic,
+  restitution,
+  friction,
+  colliderType = "hull",
+  children,
+}: GamePolyhedronProps) {
+  return (
+    <PhysicsWrapper
+      position={position}
+      rotation={rotation}
+      mass={mass}
+      isStatic={isStatic}
+      restitution={restitution}
+      friction={friction}
+      colliderType={colliderType}
+    >
+      <mesh castShadow={castShadow} receiveShadow={receiveShadow}>
+        <icosahedronGeometry args={args} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      {children}
+    </PhysicsWrapper>
+  );
+}
+
+export function GameDodecahedron({
+  position,
+  rotation,
+  args = [1, 0],
+  color = "#888",
+  castShadow = true,
+  receiveShadow = true,
+  mass,
+  isStatic,
+  restitution,
+  friction,
+  colliderType = "hull",
+  children,
+}: GamePolyhedronProps) {
+  return (
+    <PhysicsWrapper
+      position={position}
+      rotation={rotation}
+      mass={mass}
+      isStatic={isStatic}
+      restitution={restitution}
+      friction={friction}
+      colliderType={colliderType}
+    >
+      <mesh castShadow={castShadow} receiveShadow={receiveShadow}>
+        <dodecahedronGeometry args={args} />
         <meshStandardMaterial color={color} />
       </mesh>
       {children}

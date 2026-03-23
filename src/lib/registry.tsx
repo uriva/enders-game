@@ -3,12 +3,17 @@ import { defineRegistry } from "@json-render/react";
 import { threeComponents } from "@json-render/react-three-fiber";
 import { catalog } from "./catalog";
 import TriggerVolume from "@/components/game/TriggerVolume";
+import ProceduralAudio from "@/components/game/ProceduralAudio";
 import GroundPlane from "@/components/game/GroundPlane";
 import {
   GameBox,
   GameSphere,
   GameCylinder,
   GameCone,
+  GameTorus,
+  GameTorusKnot,
+  GameIcosahedron,
+  GameDodecahedron,
 } from "@/components/game/GamePrimitives";
 
 /**
@@ -32,7 +37,12 @@ const gameComponents = {
   GameSphere: wrap(GameSphere),
   GameCylinder: wrap(GameCylinder),
   GameCone: wrap(GameCone),
+  GameTorus: wrap(GameTorus),
+  GameTorusKnot: wrap(GameTorusKnot),
+  GameIcosahedron: wrap(GameIcosahedron),
+  GameDodecahedron: wrap(GameDodecahedron),
   TriggerVolume: wrap(TriggerVolume),
+  ProceduralAudio: wrap(ProceduralAudio),
   GroundPlane: wrap(GroundPlane),
 };
 

@@ -28,7 +28,7 @@ THE GIANT'S DRINK SCENE RULES:
 - DO NOT include a GroundPlane. The engine already provides an infinite GroundPlane at y=0.
 - Place 1-3 TriggerVolume elements near points of interest (e.g., near the left drink, near the right drink, behind the giant) to detect player movement.
 - An enormous Giant sits or stands across from the player's spawn point (the player spawns at [0, 2, 8] facing toward origin)
-- Build the Giant from Game* primitives: use large GameSphere for head, GameCylinder/GameBox for body parts — be creative with primitive composition. The Giant should be positioned near the origin [0, 0, 0] and be MASSIVE (at least 8-12 units tall)
+- Build the Giant from Game* primitives: use large GameSphere/GameDodecahedron for head, GameCylinder/GameBox/GameTorus for body parts — be creative with primitive composition. The Giant should be positioned near the origin [0, 0, 0] and be MASSIVE (at least 8-12 units tall)
 - A table or surface between the Giant and the player (around [0, 1, 5]) with TWO goblets/cups/vessels on it, within walking distance of the player's spawn
 - The Giant speaks to the player, offering a choice between the two drinks
 - One drink supposedly lets you pass, the other kills you
@@ -38,6 +38,7 @@ THE GIANT'S DRINK SCENE RULES:
 
 ATMOSPHERE:
 - Color palette: dark, muted, with one or two accent colors (vary by seed)
+- Include a ProceduralAudio set to an ominous or tense mood.
 - Heavy atmosphere — use Fog (near: 5, far: 50-80 range)
 - Subtle particle effects with Sparkles or Stars overhead
 - The goblets should look distinct from each other but both somehow wrong
