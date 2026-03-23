@@ -6,6 +6,7 @@ import { PointerLockControls } from "@react-three/drei";
 import { RigidBody, CapsuleCollider } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
+import { useGameContext } from "@/contexts/GameContext";
 
 const SPEED = 8.0;
 const JUMP_FORCE = 8.0;
@@ -38,8 +39,15 @@ export default function Player({
     left: false,
     right: false,
     jump: false,
+    interact: false,
   });
-  const { camera } = useThree();
+  const { camera, scene } = useThree();
+  const { onInteract } = useGameContext();
+  const raycaster = new THREE.Raycaster();
+  const lastInteractTime = useRef(0);
+  const handRef = useRef<THREE.Group>(null);
+  const handAnimationRef = useRef({ time: 0, active: false });
+
 
   // Keyboard listeners
   const handleKeyDown = useCallback(
@@ -64,6 +72,9 @@ export default function Player({
           break;
         case "Space":
           keysRef.current.jump = true;
+          break;
+        case "KeyE":
+          keysRef.current.interact = true;
           break;
       }
     },
@@ -112,6 +123,7 @@ export default function Player({
         left: false,
         right: false,
         jump: false,
+        interact: false,
       };
       // Unlock pointer when dialog is focused
       if (controlsRef.current?.isLocked) {
@@ -188,6 +200,79 @@ export default function Player({
     }
 
     body.setLinvel({ x: move.x, y: newVelY, z: move.z }, true);
+
+    // Hand animation
+    if (handRef.current) {
+      // Bob the hand slightly while walking
+      const speed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+      const bobTarget = isGrounded && speed > 0.1 ? Math.sin(performance.now() / 150) * 0.05 : 0;
+      // We start at y = -0.25 so it's visible on screen
+      handRef.current.position.y += ((-0.25 + bobTarget) - handRef.current.position.y) * 0.1;
+      
+      // Interaction animation (poke forward)
+      if (handAnimationRef.current.active) {
+        handAnimationRef.current.time += 0.1;
+        const poke = Math.sin(handAnimationRef.current.time * Math.PI) * 0.3; // poke forward
+        handRef.current.position.z = -0.5 - poke;
+        
+        if (handAnimationRef.current.time >= 1) {
+          handAnimationRef.current.active = false;
+          handRef.current.position.z = -0.5;
+        }
+      }
+    }
+
+    // Interaction check
+    if (keys.interact) {
+      keys.interact = false; // consume the key press
+      
+      const now = performance.now();
+      if (now - lastInteractTime.current > 1000) { // 1 sec cooldown
+        lastInteractTime.current = now;
+        
+        // Trigger hand animation
+        handAnimationRef.current = { time: 0, active: true };
+        
+        // Raycast
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera); // center of screen
+        
+        // We want to intersect meshes, but typically the meshes are children of the RigidBody groups.
+        // It's tricky with rapier, but raycasting against the scene works for standard Three.js objects.
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        
+        let hitSomething = false;
+        
+        for (let i = 0; i < intersects.length; i++) {
+          const hit = intersects[i];
+          if (hit.distance > 4) break; // too far
+          
+          // Skip the ground plane, sky, player, etc.
+          const obj = hit.object;
+          if (obj.userData?.isPlayer) continue;
+          
+          // Try to guess a name
+          let name = obj.name || obj.parent?.name || (obj as THREE.Mesh).geometry?.type?.replace('Geometry', '') || "object";
+          if (name === "Box") name = "block";
+          if (name === "Sphere") name = "orb";
+          if (name === "Cylinder") name = "pillar";
+          
+          // If we hit a standard mesh (not an invisible collider)
+          if (obj instanceof THREE.Mesh && !obj.name.includes('ground') && !name.includes('Plane')) {
+            hitSomething = true;
+            if (onInteract) {
+              onInteract(name.toLowerCase(), [hit.point.x, hit.point.y, hit.point.z]);
+            }
+            break;
+          }
+        }
+        
+        if (!hitSomething && onInteract) {
+          // If they try to interact with thin air
+          // We could send nothing, or we could let the AI know they are grasping at nothing
+        }
+      }
+    }
+
   });
 
   return (
@@ -206,6 +291,44 @@ export default function Player({
         {/* Add a subtle personal light so the player is never in total darkness */}
         <pointLight position={[0, 0.5, 0]} intensity={2} distance={15} />
       </RigidBody>
+      {/* Attach a visual hand to the camera */}
+      <group>
+        <primitive object={camera}>
+          {/* Base rotation points fingers roughly forward, palm slightly inward and up */}
+          <group ref={handRef} position={[0.3, -0.25, -0.5]} rotation={[-Math.PI / 4, -0.2, 0.1]}>
+            {/* Palm */}
+            <mesh castShadow position={[0, 0, 0]}>
+              <boxGeometry args={[0.08, 0.1, 0.03]} />
+              <meshStandardMaterial color="#f0d0b0" roughness={0.6} />
+            </mesh>
+            {/* Thumb (on the left side since it's a right hand) */}
+            <mesh castShadow position={[-0.05, 0, 0.01]} rotation={[0, 0.2, 0.4]}>
+              <capsuleGeometry args={[0.012, 0.04, 4, 8]} />
+              <meshStandardMaterial color="#f0d0b0" roughness={0.6} />
+            </mesh>
+            {/* Index Finger */}
+            <mesh castShadow position={[-0.025, 0.07, 0]}>
+              <capsuleGeometry args={[0.012, 0.05, 4, 8]} />
+              <meshStandardMaterial color="#f0d0b0" roughness={0.6} />
+            </mesh>
+            {/* Middle Finger */}
+            <mesh castShadow position={[0, 0.075, 0]}>
+              <capsuleGeometry args={[0.012, 0.06, 4, 8]} />
+              <meshStandardMaterial color="#f0d0b0" roughness={0.6} />
+            </mesh>
+            {/* Ring Finger */}
+            <mesh castShadow position={[0.025, 0.07, 0]}>
+              <capsuleGeometry args={[0.012, 0.05, 4, 8]} />
+              <meshStandardMaterial color="#f0d0b0" roughness={0.6} />
+            </mesh>
+            {/* Pinky Finger */}
+            <mesh castShadow position={[0.045, 0.06, 0]}>
+              <capsuleGeometry args={[0.01, 0.04, 4, 8]} />
+              <meshStandardMaterial color="#f0d0b0" roughness={0.6} />
+            </mesh>
+          </group>
+        </primitive>
+      </group>
       <PointerLockControls ref={controlsRef} />
     </>
   );

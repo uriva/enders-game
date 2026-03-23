@@ -9,10 +9,10 @@ export interface PsychProfile {
 
 export interface GameState {
   seed: string;
-  scene: "giants_drink" | "beyond" | "death";
+  scene: "exploration" | "death";
   deathCount: number;
   turnCount: number;
-  giantDefeated: boolean;
+  giantDefeated: boolean; // Keeping for legacy reasons or future use
   actionHistory: string[];
   psychProfile: PsychProfile;
   narrative: string; // LLM-maintained narrative summary
@@ -25,7 +25,7 @@ export function createInitialGameState(): GameState {
     Date.now().toString(36).slice(-4);
   return {
     seed,
-    scene: "giants_drink",
+    scene: "exploration",
     deathCount: 0,
     turnCount: 0,
     giantDefeated: false,

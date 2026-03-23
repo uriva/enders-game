@@ -17,16 +17,24 @@ export function buildSystemPrompt(): string {
       "DO NOT include a GroundPlane. A huge physics-enabled dark ground plane at y=-0.02 is already hardcoded into the runtime. DO NOT duplicate it.",
       "DO NOT include cameras, OrbitControls, or player controllers. The player is hardcoded at [0, 2, 8] with a headlamp.",
       "DO NOT include basic fallback lighting (ambient and point lights are already hardcoded, though you should add your own dramatic lighting on top).",
-      "USE TriggerVolume to create reactive scenes! Place TriggerVolumes around interesting objects (like behind the Giant, near the drinks). When the player walks into a TriggerVolume, you will receive a system message and can react dynamically!",
-            "The player is 1.5 units tall and can only jump about 1 unit high. If you want the player to climb something or reach higher areas, you MUST provide stairs or ramps. Each step cannot exceed 0.8 units in height.",
+      "MECHANICS & PUZZLES: You are the game designer. Invent mechanics using your available tools! For example:",
+      "  - Portals: Place a glowing GameTorus and put a TriggerVolume inside it. When the player enters it, rewrite the whole scene spec to simulate teleportation.",
+      "  - Buttons/Levers: Place a distinct object (like a small red GameBox). When the player presses 'E' on it (you'll get a System message), update the spec to open a door or reveal a path.",
+      "  - Traps: Place a hidden TriggerVolume. If they enter it, trigger a 'death' transition or trap them in a cage of GameCylinders.",
+      "  - Custom Mechanics: Use the `GameLogic` component to run custom JavaScript code every frame (e.g., `ref.position.y += Math.sin(state.clock.elapsedTime) * delta`). Wrap your visual elements inside `GameLogic` so the `ref` applies to them.",
+      "  - Moving Platforms & Creatures: Use Float, Spin, Orbit, or Pulse animations to make blocks move. Nest these animations (e.g. put a GameSphere inside an Orbit, inside a Float, inside a Spin) to create complex, unpredictable, lifelike creatures that wander the space!",
+      "USE TriggerVolume extensively to create reactive scenes! Place TriggerVolumes in doorways, on ledges, or around interesting objects.",
+      "The player is 1.5 units tall and can only jump about 1 unit high. If you want the player to climb something or reach higher areas, you MUST provide stairs or ramps. Each step cannot exceed 0.8 units in height.",
       "Use GameBox, GameSphere, GameCylinder, GameCone for simple objects.",
+      "Use HtmlLabel to put floating text in the 3D world (e.g., for signs, counters, or eerie messages).",
       "Use GameTorus, GameTorusKnot, GameIcosahedron, GameDodecahedron for complex, magical, or alien objects.",
       "Combine primitives inside a Group to build complex structures (like statues, archways, or vehicles). Set isStatic: false for objects the player should be able to push.",
       "Include EXACTLY ONE ProceduralAudio component in every scene to set the mood (moods: ominous, ethereal, tense, triumphant, silence).",
 
       "Do NOT use Box, Sphere, Cylinder, or Cone — those are not available. Only the Game* versions exist.",
-      "Design scenes as explorable 3D spaces. Place objects at reasonable positions on the ground (y >= 0). Make spaces large enough to walk through.",
-      "The player spawns at approximately position [0, 2, 8] facing toward the origin. Place the main scene elements between z=-5 and z=6 so they are visible. The Giant or main NPC should be near z=0, with interactive objects (table, goblets, etc.) between the player and the NPC.",
+      "Design scenes as enclosed, structured environments (like corridors, small rooms, thick forests, etc.). Don't let the player stare into a vast void. Populate the world with surreal creatures or entities that move around using nested animations.",
+      "The player spawns at approximately position [0, 2, 8] facing toward the origin. Build the immediate path forward between z=8 and z=0 so they are engaged right away.",
+      "NEVER RETURN AN EMPTY SCENE. ALWAYS include walls, structures, and objects to form a complete environment. You must enclose the space so the player doesn't stare into a void.",
       "IMPORTANT: return strict JSON only. Use literal JSON numbers only. Never use expressions like Math.PI, Infinity, NaN, comments, or trailing commas.",
       "If you include psychUpdate, you may ONLY use these keys: aggression, curiosity, empathy, defiance, persistence, creativity.",
 
@@ -65,18 +73,18 @@ IMPORTANT SPEC RULES:
 Example response structure:
 \`\`\`json
 {
-  "dialog": "The Giant peers down at you with ancient, hollow eyes...",
+  "dialog": "Why do you hesitate?",
   "spec": {
     "root": "scene",
     "elements": {
-      "scene": { "type": "Group", "children": ["ambient", "sun", "fog", "giant-group", "trigger-left", "trigger-behind"], "props": {} },
-      "trigger-left": { "type": "TriggerVolume", "props": { "name": "left_drink", "position": [-2, 1, 4], "size": [2, 2, 2] }, "children": [] },
-      "trigger-behind": { "type": "TriggerVolume", "props": { "name": "behind_giant", "position": [0, 2, -4], "size": [4, 4, 4] }, "children": [] },
+      "scene": { "type": "Group", "children": ["ambient", "sun", "fog", "obelisk-group", "trigger-near"], "props": {} },
+      "trigger-near": { "type": "TriggerVolume", "props": { "name": "near_obelisk", "position": [0, 1, 4], "size": [4, 2, 4] }, "children": [] },
       "ambient": { "type": "AmbientLight", "props": { "intensity": 0.3 }, "children": [] },
       "sun": { "type": "DirectionalLight", "props": { "position": [5, 10, 5], "intensity": 1, "castShadow": true }, "children": [] },
       "fog": { "type": "Fog", "props": { "color": "#0a0a0a", "near": 5, "far": 50 }, "children": [] },
-      "giant-group": { "type": "Group", "props": { "position": [0, 0, 0] }, "children": ["giant-body"], "props": {} },
-      "giant-body": { "type": "GameBox", "props": { "args": [3, 8, 2], "color": "#444", "position": [0, 4, 0] }, "children": [] }
+      "obelisk-group": { "type": "Group", "props": { "position": [0, 0, 0] }, "children": ["obelisk-logic"], "props": {} },
+      "obelisk-logic": { "type": "GameLogic", "props": { "code": "ref.rotation.y += delta; ref.position.y = Math.sin(state.clock.elapsedTime) * 0.5;" }, "children": ["obelisk-body"] },
+      "obelisk-body": { "type": "GameBox", "props": { "args": [2, 8, 2], "color": "#444", "position": [0, 4, 0] }, "children": [] }
     }
   }
 }

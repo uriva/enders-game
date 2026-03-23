@@ -3,9 +3,9 @@ import { streamText, Output } from "ai";
 import { z } from "zod";
 import { buildSystemPrompt } from "@/lib/prompts/system";
 import {
-  buildGiantsDrinkPrompt,
-  buildGiantsDrinkActionPrompt,
-} from "@/lib/prompts/giants-drink";
+  buildInitialWorldPrompt,
+  buildWorldActionPrompt,
+} from "@/lib/prompts/world-builder";
 import type { GameState } from "@/types/game";
 
 const google = createGoogleGenerativeAI({
@@ -146,20 +146,19 @@ function sanitizeOutput(output: z.infer<typeof ResponseSchema>) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { gameState, action } = body as {
+    const { gameState, action, currentSpec } = body as {
       gameState: GameState;
       action: string | null;
+      currentSpec?: any;
     };
 
     // Build the appropriate user prompt
     let userPrompt: string;
 
     if (!action) {
-      userPrompt = buildGiantsDrinkPrompt(gameState);
-    } else if (gameState.scene === "giants_drink") {
-      userPrompt = buildGiantsDrinkActionPrompt(gameState, action);
+      userPrompt = buildInitialWorldPrompt(gameState);
     } else {
-      userPrompt = buildBeyondPrompt(gameState, action);
+      userPrompt = buildWorldActionPrompt(gameState, action, currentSpec);
     }
 
     const systemPrompt = buildSystemPrompt();
@@ -169,14 +168,6 @@ export async function POST(request: Request) {
       output: Output.object({
         schema: ResponseSchema,
       }),
-      providerOptions: {
-        google: {
-          structuredOutputs: false,
-          thinkingConfig: {
-            thinkingBudget: 1024,
-          },
-        },
-      },
       system: systemPrompt,
       prompt: userPrompt,
     });
@@ -252,34 +243,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
-
-function buildBeyondPrompt(state: GameState, action: string): string {
-  const { seed, psychProfile, narrative, turnCount } = state;
-
-  return `The player has defeated the Giant and is now exploring the world beyond.
-
-SEED: "${seed}"
-TURN: ${turnCount}
-PSYCHOLOGICAL PROFILE:
-- Aggression: ${psychProfile.aggression.toFixed(2)}
-- Curiosity: ${psychProfile.curiosity.toFixed(2)}
-- Empathy: ${psychProfile.empathy.toFixed(2)}
-- Defiance: ${psychProfile.defiance.toFixed(2)}
-- Persistence: ${psychProfile.persistence.toFixed(2)}
-- Creativity: ${psychProfile.creativity.toFixed(2)}
-
-NARRATIVE SO FAR: ${narrative || "The player just defeated the Giant and entered the world beyond."}
-
-PLAYER ACTION: "${action}"
-
-Generate the next scene. The world beyond should:
-- Be surreal and dreamlike — a twisted fairyland
-- Reflect the player's psychological profile (high aggression = more hostile environments, high curiosity = more mysterious/puzzle-rich, high empathy = more characters in need, etc.)
-- Include interactive elements the player can engage with
-- Build toward deeper psychological revelations
-- May include NPCs, structures, landscapes, puzzles
-- Should feel like it's reading the player's mind
-
-Create a complete, atmospheric 3D scene that responds to the player's action and psychological state.`;
 }

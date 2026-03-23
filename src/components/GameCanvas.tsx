@@ -72,6 +72,7 @@ interface GameCanvasProps {
   loading: boolean;
   isDialogFocused: boolean;
   onZoneEnter?: (zoneId: string) => void;
+  onInteract?: (objectName: string, position: [number, number, number]) => void;
 }
 
 /**
@@ -87,6 +88,7 @@ export default function GameCanvas({
   loading,
   isDialogFocused,
   onZoneEnter,
+  onInteract,
 }: GameCanvasProps) {
   useEffect(() => {
     console.log(
@@ -124,7 +126,7 @@ export default function GameCanvas({
                     <Physics gravity={[0, -9.81, 0]}>
             <GroundPlane size={500} color="#0b1116" position={[0, -0.02, 0]} />
             {/* LLM-generated scene (should include its own lights, fog, etc.) */}
-            <GameContext.Provider value={{ onZoneEnter }}>
+            <GameContext.Provider value={{ onZoneEnter, onInteract }}>
               {spec && (
                 <ThreeRenderer spec={spec} registry={registry as any} />
               )}

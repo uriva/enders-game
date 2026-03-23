@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import DialogBox from "@/components/DialogBox";
 import { createInitialGameState, type GameState } from "@/types/game";
@@ -25,8 +25,46 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [started, setStarted] = useState(false);
   const [isDialogFocused, setIsDialogFocused] = useState(false);
+  const [isDead, setIsDead] = useState(false);
   const initialized = useRef(false);
   const recentZones = useRef<Record<string, number>>({});
+  const isTicking = useRef(false);
+
+  // Autonomous Actor AI Loop
+  // If the player is idle, have the world evolve slowly around them
+  useEffect(() => {
+    if (!started || loading || isDead || !spec || !gameState) return;
+
+    const interval = setInterval(async () => {
+      if (isTicking.current || loading) return;
+      isTicking.current = true;
+      
+      try {
+        console.log("[tick] Running autonomous actor AI...");
+        const res = await fetch("/api/tick", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gameState, currentSpec: spec }),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.spec) {
+            setSpec(data.spec);
+          }
+          if (data.dialog) {
+            setDialog(data.dialog);
+          }
+        }
+      } catch (e) {
+        console.error("Tick failed", e);
+      } finally {
+        isTicking.current = false;
+      }
+    }, 15000); // Check every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [started, loading, isDead, spec, gameState]);
 
   /**
    * Stream a scene from the API via NDJSON.
@@ -37,15 +75,35 @@ export default function Home() {
   const fetchScene = useCallback(
     async (
       state: GameState,
-      action: string | null
+      action: string | null,
+      currentSpec: Spec | null
     ): Promise<SceneResponse | null> => {
       setLoading(true);
-      setDialog((prev) => prev || "The Giant waits...");
+      setDialog((prev) => prev || "The Mind Game is generating...");
       try {
+        // Fire off background narrative generation (non-blocking)
+        if (state.turnCount > 0 || action) {
+          fetch("/api/narrative", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ gameState: state, action, currentSpec }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.narrative) {
+                console.log("[narrative] Updated hidden narrative rules:", data.narrative);
+                setGameState((prev) => 
+                  prev ? { ...prev, narrative: data.narrative } : prev
+                );
+              }
+            })
+            .catch((err) => console.error("Narrative update failed:", err));
+        }
+
         const res = await fetch("/api/act", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ gameState: state, action }),
+          body: JSON.stringify({ gameState: state, action, currentSpec }),
         });
 
         if (!res.ok) {
@@ -170,10 +228,10 @@ export default function Home() {
       // Handle scene transitions
       if (response.sceneTransition === "death") {
         next.deathCount += 1;
-        next.scene = "giants_drink";
+        next.scene = "death";
       } else if (response.sceneTransition === "beyond") {
         next.giantDefeated = true;
-        next.scene = "beyond";
+        next.scene = "exploration";
       }
 
       next.turnCount += 1;
@@ -227,7 +285,7 @@ export default function Home() {
       }
     }
 
-    const response = await fetchScene(state, null);
+    const response = await fetchScene(state, null, null);
     if (response) {
       const next = applyResponse(state, response);
       setGameState(next);
@@ -244,26 +302,40 @@ export default function Home() {
       };
       setGameState(current);
 
-      const response = await fetchScene(current, action);
+      const response = await fetchScene(current, action, spec);
       if (!response) return;
 
-      // If the player died, show death scene briefly, then re-generate Giant's Drink
+      // If the player died, show death scene briefly, then re-generate the world
       if (response.sceneTransition === "death") {
         const afterDeath = applyResponse(current, response);
         setGameState(afterDeath);
 
-        // After a pause, regenerate the Giant's Drink scene
+        // After a pause, regenerate the initial scene
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        
+        setIsDead(true);
+        setDialog("");
+        
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
-        const respawn = await fetchScene(afterDeath, null);
+        // Create a new seed so the world resets slightly differently
+        const respawnState = {
+          ...afterDeath,
+          scene: "exploration" as const,
+          seed: Math.random().toString(36).substring(2, 8),
+          actionHistory: [],
+        };
+        
+        const respawn = await fetchScene(respawnState, null, null);
         if (respawn) {
-          const afterRespawn = applyResponse(afterDeath, respawn);
+          const afterRespawn = applyResponse(respawnState, respawn);
           setGameState(afterRespawn);
         }
+        setIsDead(false);
       } else {
         const next = applyResponse(current, response);
-        // Update narrative for beyond scenes
-        if (next.scene === "beyond") {
+        // Update narrative for exploration scenes
+        if (next.scene === "exploration") {
           next.narrative =
             (next.narrative ? next.narrative + " " : "") + response.dialog;
         }
@@ -272,6 +344,15 @@ export default function Home() {
     },
     [gameState, loading, fetchScene, applyResponse]
   );
+
+  const handleInteract = useCallback((objectName: string, position: [number, number, number]) => {
+    if (!gameState || loading) return;
+    
+    console.log(`[page] Player interacted with ${objectName} at`, position);
+    
+    const systemAction = `*[System: Player pressed 'E' to interact with an object visually similar to '${objectName}' at position [${position[0].toFixed(1)}, ${position[1].toFixed(1)}, ${position[2].toFixed(1)}]]*`;
+    handleAction(systemAction);
+  }, [gameState, loading, handleAction]);
 
   const handleZoneEnter = useCallback((zoneId: string) => {
     if (!gameState || loading) return;
@@ -319,18 +400,27 @@ export default function Home() {
 
   return (
     <div className="relative h-screen w-screen bg-black">
+      {isDead && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md transition-opacity duration-1000">
+          <div className="text-center space-y-4">
+            <h1 className="text-red-600 font-serif text-6xl tracking-widest uppercase">You Died</h1>
+            <p className="text-gray-500 font-mono text-sm tracking-widest">The Mind Game resets...</p>
+          </div>
+        </div>
+      )}
       <GameCanvas
         spec={spec}
         loading={loading}
         isDialogFocused={isDialogFocused}
         onZoneEnter={handleZoneEnter}
+        onInteract={handleInteract}
       />
       <DialogBox
         dialog={dialog}
         onAction={handleAction}
         disabled={loading}
         deathCount={gameState?.deathCount ?? 0}
-        scene={gameState?.scene ?? "giants_drink"}
+        scene={gameState?.scene ?? "exploration"}
         onFocusChange={setIsDialogFocused}
       />
     </div>

@@ -145,6 +145,13 @@ const gameComponentDefinitions = {
     }),
   },
 
+  GameLogic: {
+    description: "Executes custom JavaScript code every frame. Useful for continuous animations or complex procedural movement. Code has access to variables: `ref` (a THREE.Group containing the children), `state` (useFrame state), `delta` (time delta), and `THREE`.",
+    props: z.object({
+      code: z.string().optional().describe("JavaScript code to execute every frame. Example: 'ref.rotation.y += delta; ref.position.y = Math.sin(state.clock.elapsedTime)'")
+    })
+  },
+
   TriggerVolume: {
     description:
       "An invisible sensor box that detects when the player walks into it. Use this to create location-based events, like the player approaching an object, hiding behind something, or exploring a specific area. Place these around interesting parts of your scene. When the player enters it, you will be notified.",

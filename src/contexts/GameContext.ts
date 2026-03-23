@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 
 export interface GameContextType {
   onZoneEnter?: (zoneId: string) => void;
+  onInteract?: (objectName: string, position: [number, number, number]) => void;
 }
 
 export const GameContext = createContext<GameContextType>({});

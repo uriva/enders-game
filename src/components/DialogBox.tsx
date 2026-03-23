@@ -178,7 +178,7 @@ export default function DialogBox({
         <div className="pointer-events-none flex justify-between px-1 text-[10px] font-mono text-gray-600 uppercase tracking-widest">
           <span>{scene.replace("_", " ")}</span>
           <div className="flex gap-4 items-center">
-            {deathCount > 0 && <span>deaths: {deathCount}</span>}
+            
             {/* TTS toggle */}
             {ttsSupported && (
               <button

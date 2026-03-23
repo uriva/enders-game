@@ -15,6 +15,7 @@ import {
   GameIcosahedron,
   GameDodecahedron,
 } from "@/components/game/GamePrimitives";
+import GameLogic from "@/components/game/GameLogic";
 
 /**
  * Wrapper to match json-render's registry component signature:
@@ -44,6 +45,7 @@ const gameComponents = {
   TriggerVolume: wrap(TriggerVolume),
   ProceduralAudio: wrap(ProceduralAudio),
   GroundPlane: wrap(GroundPlane),
+  GameLogic: wrap(GameLogic),
 };
 
 /**
