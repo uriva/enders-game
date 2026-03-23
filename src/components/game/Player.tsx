@@ -7,8 +7,8 @@ import { RigidBody, CapsuleCollider } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 
-const SPEED = 5;
-const JUMP_FORCE = 5;
+const SPEED = 8.0;
+const JUMP_FORCE = 8.0;
 const RESPAWN_POSITION: [number, number, number] = [0, 2, 8];
 
 interface PlayerProps {
@@ -180,7 +180,7 @@ export default function Player({
     const vel = body.linvel();
 
     // Simple ground check: if Y velocity is near zero, player is on ground
-    const isGrounded = Math.abs(vel.y) < 0.1;
+    const isGrounded = Math.abs(vel.y) < 0.5; // more forgiving to allow jumping on uneven objects
 
     let newVelY = vel.y;
     if (keys.jump && isGrounded) {
@@ -202,7 +202,7 @@ export default function Player({
         type="dynamic"
         userData={{ isPlayer: true }}
       >
-        <CapsuleCollider args={[0.35, 0.3]} />
+        <CapsuleCollider args={[0.4, 0.25]} />
         {/* Add a subtle personal light so the player is never in total darkness */}
         <pointLight position={[0, 0.5, 0]} intensity={2} distance={15} />
       </RigidBody>

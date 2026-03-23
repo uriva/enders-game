@@ -106,9 +106,9 @@ export default function DialogBox({
         {dialog && (
           <div
             ref={dialogRef}
-            className="pointer-events-auto bg-black/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 max-h-32 overflow-y-auto"
+            className="pointer-events-auto bg-black/80 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 max-h-48 overflow-y-auto"
           >
-            <p className="text-gray-200 font-serif text-sm leading-relaxed italic">
+            <p className="text-gray-200 font-serif text-lg leading-relaxed italic">
               {dialog}
             </p>
           </div>
@@ -161,7 +161,7 @@ export default function DialogBox({
                     ? "..."
                     : "Speak..."
               }
-              className="flex-1 bg-black/80 backdrop-blur-sm border border-gray-600/50 rounded-lg px-4 py-2.5 text-gray-200 font-mono text-sm placeholder-gray-600 focus:outline-none focus:border-gray-400/50 disabled:opacity-50"
+              className="flex-1 bg-black/80 backdrop-blur-sm border border-gray-600/50 rounded-lg px-4 py-2.5 text-gray-200 font-mono text-base placeholder-gray-600 focus:outline-none focus:border-gray-400/50 disabled:opacity-50"
             />
 
             <button

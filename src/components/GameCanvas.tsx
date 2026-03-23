@@ -157,7 +157,7 @@ export default function GameCanvas({
         </div>
       )}
       {!isDialogFocused && (
-        <div className="absolute top-4 left-4 text-gray-600 font-mono text-[10px] pointer-events-none">
+        <div className="absolute top-4 left-4 text-gray-400 font-mono text-xs bg-black/50 p-2 rounded pointer-events-none">
           Click to look around &middot; WASD to move &middot; Space to jump
         </div>
       )}
