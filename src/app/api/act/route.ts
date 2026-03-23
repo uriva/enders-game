@@ -164,7 +164,9 @@ export async function POST(request: Request) {
     const systemPrompt = buildSystemPrompt();
 
     const result = streamText({
-      model: google("gemini-2.5-flash"),
+      model: google("gemini-2.5-flash", {
+        structuredOutputs: false,
+      }),
       output: Output.object({
         schema: ResponseSchema,
       }),

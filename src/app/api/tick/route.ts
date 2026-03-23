@@ -79,7 +79,9 @@ YOUR JOB:
 Return the COMPLETE modified JSON spec.`;
 
     const result = await generateObject({
-      model: google("gemini-2.5-flash"),
+      model: google("gemini-2.5-flash", {
+        structuredOutputs: false,
+      }),
       schema: ResponseSchema,
       prompt,
     });
